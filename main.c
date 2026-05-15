@@ -59,10 +59,13 @@ void init(){
 	initCharSet();
 }
 
-void loadProg(){
-	FILE* fptr = fopen("roms/br8kout.ch8", "rb");
+void loadProg(char* romString){
+	char fpath[1024+4];
+	snprintf(fpath,6,"%s","roms/");
+	strcat(fpath,romString);
+	FILE* fptr = fopen(fpath, "rb");
     if (!fptr) {
-        printf("Failed to open file\n");
+        printf("Failed to open file \"%s\"\n",fpath);
         return;
     }
 
@@ -312,10 +315,105 @@ void dumpMem(int low,int high){
 	}
 }
 
-//main program loop (obviously)
+int populatePrgEntryTable(char** strArray, int n){
+	WIN32_FIND_DATA ffd;
+	HANDLE hFind = INVALID_HANDLE_VALUE;
+	hFind = FindFirstFile("roms\\*",&ffd);
+	
+	if(hFind == INVALID_HANDLE_VALUE){
+		printf("error parsing program name\n");
+		return 0;
+	}
+	
+	int i = 0;
+	while(i < n && FindNextFile(hFind, &ffd) != 0){
+		//check if filename is . or ..
+		if(!strcmp(ffd.cFileName,".")){
+			continue;
+		}
+		else if(!strcmp(ffd.cFileName,"..")){
+			continue;
+		}
+		
+		//check if entry is the right filetype
+		
+		//make copy of string
+		char stringCopy[1024];
+		snprintf(stringCopy,sizeof(stringCopy),"%s",ffd.cFileName);
+		
+		//save file name
+		char progName[1024];
+		char* currentTok = strtok(stringCopy,".");
+		snprintf(progName,sizeof(progName),"%s",currentTok);
+		//get extension
+		while(currentTok != NULL){
+			currentTok = strtok(NULL,".");
+		}
+		
+		char progExtension[4];
+		snprintf(progExtension,sizeof(progExtension),"%s",currentTok);
+		
+		//continue if extension is wrong
+		if(!strcmp(progExtension,"ch8")){
+			continue;
+		}
+		
+		printf("%d: %s\n",i+1,progName);
+		//add to array of valid titles
+		strArray[i]=strdup(ffd.cFileName);
+		i++;
+	}
+	
+	FindClose(hFind);
+	return i;
+}
+
+void prgEntryCleanup(char** strArray, int n){
+	for(int i = 0; i < n-1; i++){
+		if(strArray[i]==0){
+			break;
+		}
+		free(strArray[i]);
+	}
+}
+
+void prgLoadMenu(char* prgNameBuff, int prgNameBuffSize){
+	char* strArray[1024];
+	int sizeOfArray = sizeof(strArray)/sizeof(char*);
+	int numElements = populatePrgEntryTable(strArray,sizeOfArray);
+	
+	//user input goto loop starts here
+	promptForUserInput:
+	char userInputBuff[20];
+	userInputBuff[0]='\0';
+	printf("choice: ");
+	fgets(userInputBuff,sizeof(userInputBuff),stdin);
+	
+	//convert to long long and check if it's valid
+	char* endPtr;
+	long long convertedInt = strtol(userInputBuff,&endPtr,10);
+	//decrement it since the options presented start at 1 for usability
+	convertedInt--;
+	if(*endPtr != '\0' && *endPtr != '\n'){
+		printf("invalid index, not a number.\n");
+		goto promptForUserInput;
+	}
+	
+	if(convertedInt >= numElements || convertedInt < 0){
+		printf("invalid index, out of range.\n");
+		goto promptForUserInput;
+	}
+	
+	snprintf(prgNameBuff,prgNameBuffSize,"%s",strArray[convertedInt]);
+	printf("chosen: %s\n",prgNameBuff);
+	prgEntryCleanup(strArray,numElements);
+}
+
 int main(){
+	char programName[1024];
+	prgLoadMenu(programName,sizeof(programName));
 	init();
-	loadProg();
+	loadProg(programName);
 	createTimerThreads();
 	createCPUThread();
 	

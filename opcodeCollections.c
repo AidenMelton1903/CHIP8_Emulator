@@ -118,9 +118,6 @@ void executePrimaryOpDWrap(uint16_t opcode){
 				if(display[startIndex] == 1 && currentBit == 1){
 					flag=1;
 				}
-				if(currentBit > ){
-					
-				}
 				
 				display[startIndex] ^= currentBit;
 				//printf("PIXEL SET at %d,%d\n", Xk, Yk);
