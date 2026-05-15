@@ -1,2 +1,4 @@
 ## Forward
-This is a work in progress, it can play some CHIP8 roms successfully but may struggle with others. In addition, there may be some strange output on startup, but once initialized it should work fine. Specifically, of the ROMs in the ROM folder, snake works perfectly fine. for br8kout the ball takes a second to appear but once it does the game works fine. For Outlaw... it is a work in progress. At present it loads br8kout because it's hardcoded to do so, obviously it won't stay that way but at present it's much more convenient for debugging.
+This is a work in progress, it can play some CHIP8 roms successfully but may struggle with others. In addition, there may be some strange output on startup, but once initialized it should work fine. Specifically, of the ROMs in the ROM folder, br8kout has a few minor errors and outlaw is a work in progress.
+
+WASD are the controls for most of the games
